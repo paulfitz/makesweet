@@ -11,7 +11,6 @@
 
 import Blender
 import re
-import Image
 import os
 import glob
 

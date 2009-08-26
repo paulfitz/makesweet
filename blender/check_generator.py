@@ -1,11 +1,10 @@
+# Run from blender, as:
+#   blender -b blend_file_to_test.blend -P check_generator.py
 #
 # This is a test script for checking whether a .blend is suitable
 # for use as a generator on live.makesweet.com
 #
-# Run from blender, as:
-#   blender -b blend_file_to_test.blend -P check_generator.py
-#
-# Author:  Paul Fitzpatrick <paul@makesweet.com>
+# Author:  Paul Fitzpatrick, paul-at-makesweet.com
 # License: GPL v2 or later
 #
 
@@ -17,41 +16,53 @@ import glob
 warnings = 0
 errors = 0
 
-print("="*75 + "\n= Script check")
-txtct = 0
-for txt in Blender.Text.Get():
-    if txtct>0:
-        print("WARNING: If this object is a script, it will be ignored: " + txt.name)
-        warnings = warnings+1
-    txtct = txtct+1
+# Check for controllable images.  These are images that are supposed
+# to be changed by the generator.  They are distinguished from images
+# that should be left untouched by their name.  Controllable images
+# should have the prefix "mkswt_".
+
+print("="*75 + "\n= Controllable image check")
+imgs = Blender.Image.Get()
+imgs.sort(lambda x,y: cmp(x.name,y.name))
+controllable = []
+for img in imgs:
+    if img.users>0:
+        print("  (checking image '%s')" % img.name)
+        if img.name.find("mkswt_")==0:
+            print("Controllable image found: " + img.name)
+            controllable.append(img.name)
+
+if len(controllable)==0:
+    print("ERROR: No controllable image found.  Please add an image whose ")
+    print("name contains the sequence 'mkswt_'")
+    errors = errors+1
+
+
+# Check that all (non-controllable) images are packed.  Other resources
+# such as fonts should be packed too, but this isn't checked here.
 
 print("="*75 + "\n= Packed images check")
 for img in Blender.Image.Get():
-    if ((not(img.packed)) and img.filename!=""):
+    print("  (checking image '%s')" % img.name)
+    if not(img.packed) and img.filename!="" and not(img.name in controllable):
         print("WARNING: This image is not packed: " + img.name)
         warnings = warnings+1
 
-print("="*75 + "\n= Material check")
-haveMaterial = False
-for mat in Blender.Material.Get():
-    enabledIndices = mat.enabledTextures
-    at = 0
-    textures = mat.getTextures()
-    for mtex in textures:
-        if at in enabledIndices and not(mtex is None):
-            name = mtex.tex.name
-            print("  (checking material '%s', texture '%s')" % (mat.name, name))
-            if (name.find("mod_")==0):
-                if mtex.tex.type == Blender.Texture.Types.IMAGE:
-                    print("Active texture found, '" + name +
-                          "' attached to material '" + mat.name + "'")
-                    haveMaterial = True
-        at = at+1
+# Check for the presence of unexpected scripts, and warn that they
+# will be ignored.
 
-if not(haveMaterial):
-    print("ERROR: No active material found.  Please add a material that has an ")
-    print("image texture, with the image texture's name starting with mod_")
-    errors = errors+1
+print("="*75 + "\n= Script check")
+for txt in Blender.Text.Get()[1:]:
+    print("  (checking text block '%s')" % txt.name)
+    if len("".join(txt.asLines()))>0:
+        if txt.name!="mkswt_config":
+            print("WARNING: If this object is a script, it will be ignored: " +
+                  txt.name)
+            warnings = warnings+1
+        else:
+            print("    (found makesweet config object '%s')" % txt.name)
+
+# Check that the render size is set to 800x600.
 
 print("="*75 + "\n= Render size check")
 context = Blender.Scene.GetCurrent().getRenderingContext()
@@ -61,49 +72,14 @@ height = context.imageSizeY()
 if width!=800 or height!=600:
     print("ERROR: Render size is currently set to %dx%d.  Only 800x600 is currently supported."%(width,height))
     errors = errors+1
-
-print("="*75 + "\n= Test image")
-
-if errors>0:
-    print("Skipping generation of test images until errors fixed.")
 else:
-    for old_result in glob.glob("test_render_*.png"):
-        os.rename(old_result,old_result + ".bak")
-    for mat in Blender.Material.Get():
-        enabledIndices = mat.enabledTextures
-        at = 0
-        textures = mat.getTextures()
-        for mtex in textures:
-            if at in enabledIndices and not(mtex is None):
-                name = mtex.tex.name
-                if (name.find("mod_")==0):
-                    if mtex.tex.type == Blender.Texture.Types.IMAGE:
-                        print("Replacing image '" + name +
-                              "' attached to material '" + mat.name + "'")
-                        # black test image
-                        mtex.tex.image = Blender.Image.New("test_image",
-                                                           500,500,32)
-            at = at+1
+    print("  (correct size, %dx%d)" % (width,height))
 
-    Blender.Scene.Render.EnableDispWin()
-    context = Blender.Scene.GetCurrent().getRenderingContext()
-    context.setRenderPath(os.path.join(os.getcwd(),"test_render_"))
-    context.setImageType(Blender.Scene.Render.PNG)
-    curFrame = context.currentFrame()
-    context.startFrame(curFrame)
-    context.endFrame(curFrame)
-    context.setRenderWinSize(25)
-    context.renderAnim()
-    result = glob.glob("test_render_*.png")
-    if len(result)==0:
-        print("ERROR: Test render could not be created")
-        errors = errors+1
-    else:
-        print("Test render created successfully, %s" % result[0])
-        print("Please check that the inserted black area covers full surface of interest.")
-
+# Summarize the outcome of testing.
 
 print("="*75 + "\n= Summary")
+if len(controllable)>0:
+    print("Controllable image(s) found: %s" % ", ".join(controllable))
 print("Errors: %d" % errors)
 print("Warnings: %d" % warnings)
 if errors>0 or warnings>0:

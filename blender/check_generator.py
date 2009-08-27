@@ -12,6 +12,7 @@ import Blender
 import re
 import os
 import glob
+import sys
 
 warnings = 0
 errors = 0
@@ -85,3 +86,4 @@ print("Warnings: %d" % warnings)
 if errors>0 or warnings>0:
     print("Errors are always serious, warnings are just things to check.")
 
+sys.exit(errors)

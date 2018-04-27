@@ -1,0 +1,12 @@
+cmake_minimum_required(VERSION 2.6)
+
+PROJECT(makesweet)
+
+SET(BUILD_SHARED_LIBS ON)
+
+# Find YARP.  Point the YARP_DIR environment variable at your build.
+FIND_PACKAGE(YARP)
+INCLUDE_DIRECTORIES(${YARP_INCLUDE_DIRS})
+LINK_LIBRARIES(${YARP_LIBRARIES})
+
+ADD_SUBDIRECTORY(src)

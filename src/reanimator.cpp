@@ -33,7 +33,8 @@ int main(int argc, char *argv[]) {
   Repository repo;
 
   if (!options.check("zip")) {
-    fprintf(stderr, "reanimator --zip foo.zip --in img1.png img2.png\n");
+    fprintf(stderr, "reanimator --zip foo.zip --in layer1.png layer2.png\n");
+    fprintf(stderr, "reanimator --zip foo.zip --in layer1.png layer2.png +layer2_more.png\n");
     fprintf(stderr, "reanimator ... --w 200 --h 150\n");
     fprintf(stderr, "reanimator ... --first 2\n");
     fprintf(stderr, "reanimator ... --last 4\n");
@@ -52,10 +53,17 @@ int main(int argc, char *argv[]) {
   Inputs ins;
 
   Bottle& lst = options.findGroup("in");
+  int layer = 1;
   for (int i=1; i<lst.size(); i++) {
     Input& in = ins.add();
-    in.load(lst.get(i).asString().c_str());
-    in.layer = i;
+    ConstString str = lst.get(i).asString();
+    if (str[0] == '+' && layer > 1) {
+      layer--;
+      str = str.substr(1);
+    }
+    in.load(str.c_str());
+    in.layer = layer;
+    layer++;
   }
 
   Renders renders;

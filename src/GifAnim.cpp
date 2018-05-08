@@ -126,12 +126,12 @@ void GifAnim::apply() {
   blocks.push_back(Bytes((char*)mem,(size_t)sz));
 
   int accum_delay = 0;
-  //  bool have_r = false;
-  //Render *r_prev = NULL;
-  //Render *r_pre_prev = NULL;
   int emit_ct = 0;
   int step_pending = 0;
-  for (int i=0; i<frames; i++) {
+  int pending_frame_number = pal_index;
+  int pending_count = 0;
+  for (int base=0; base<frames; base++) {
+    int i = (base + ((first_frame >= 0) ? first_frame : 0)) % frames;
     step_pending += step;
     dbg_printf("Working on frame %d\n", i);
 
@@ -150,13 +150,16 @@ void GifAnim::apply() {
     renders->remove_render(i);
 
     bool change = false;
-    if (i>0) {
+    int emitting_frame_number = -1;
+    if (base>0) {
       for (int x=0; x<ww && !change; x++) {
 	for (int y=0; y<hh; y++) {
 	  int p0 = gd_prev->pixels[y][x];
 	  int p1 = gd_curr->pixels[y][x];
 	  if (p0!=p1) {
 	    change = true;
+            emitting_frame_number = pending_frame_number;
+            pending_frame_number = i;
 	    break;
 	  }
 	}
@@ -167,16 +170,17 @@ void GifAnim::apply() {
       mem = gdImageGifAnimAddPtr(gd_prev,&sz,
 				 local_color?1:0,
 				 0,0,
-				 step_pending,1,
+				 step_pending-step,1,
 				 (emit_ct>=1)?gd_pre_prev:NULL);
-      dbg_printf("  Generated frame, %d ticks\n", step_pending);
-      step_pending = 0;
+      dbg_printf("  Generated frame %d (%d), %d ticks\n", emitting_frame_number,
+                 pending_count, step_pending-step);
+      step_pending = step;
+      pending_count = 0;
       emit_ct++;
       blocks.push_back(Bytes((char*)mem,(size_t)sz));
     }
 
     if (change) {
-      //r_pre_prev = r_prev;
       gdImagePtr tmp = gd_pre_prev;
       gd_pre_prev = gd_prev;
       gd_prev = gd_curr;
@@ -185,16 +189,17 @@ void GifAnim::apply() {
       gdImagePtr tmp = gd_prev;
       gd_prev = gd_curr;
       gd_curr = tmp;
+      pending_frame_number = i;
+      pending_count++;
     }
-    //r_prev = r;
 
-    // ...
-    //renders->remove_render(i);
-    //renders->remove_mapping(i);
+    if (i == frames - 1) {
+      step_pending += last_step;
+    }
   }
 
-  step_pending += step;
-  step_pending += last_step;
+  // step_pending += step;
+  // step_pending += last_step;
   if (frames) {
     mem = gdImageGifAnimAddPtr(gd_prev,&sz,
 			       local_color?1:0,
@@ -203,7 +208,8 @@ void GifAnim::apply() {
 			       (emit_ct>=1)?gd_pre_prev:NULL);
     emit_ct++;
     blocks.push_back(Bytes((char*)mem,(size_t)sz));
-    dbg_printf("  Generated final frame, %d ticks\n", 
+    dbg_printf("  Generated final frame, %d (%d), %d ticks\n", 
+               pending_frame_number, pending_count,
 	       step_pending);
   }
 

@@ -40,6 +40,7 @@ int main(int argc, char *argv[]) {
     fprintf(stderr, "reanimator ... --last 4\n");
     fprintf(stderr, "reanimator ... --single\n");
     fprintf(stderr, "reanimator ... --auto_zoom\n");
+    fprintf(stderr, "reanimator ... --start 10  # frame to start at\n");
     fprintf(stderr, "reanimator ... --save \"frame_%%06d.jpg\"\n");
     fprintf(stderr, "reanimator ... --gif example.gif\n");
     fprintf(stderr, "reanimator ... --stats\n");
@@ -99,6 +100,9 @@ int main(int argc, char *argv[]) {
     anim.attach_renders(&renders);
     anim.set_palette(repo.get_palette());
     anim.set_timing(repo.get_period(),repo.get_hold());
+    if (options.check("start")) {
+      anim.set_first_frame(options.check("start",Value(0)).asInt());
+    }
     anim.apply();
     anim.save(options.find("gif").asString().c_str());
   }

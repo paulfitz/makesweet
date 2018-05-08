@@ -15,6 +15,7 @@ private:
   double period;
   double hold;
   bool early_release;
+  int first_frame;
 
 public:
 
@@ -23,6 +24,7 @@ public:
     period = 0.1;
     hold = 5;
     early_release = true;
+    first_frame = -1;
   }
 
   ~GifAnim();
@@ -40,6 +42,10 @@ public:
 
   void set_palette(const std::vector<int>& palette) {
     palette_frames = palette;
+  }
+
+  void set_first_frame(int index) {
+    first_frame = index;
   }
 
   void apply();

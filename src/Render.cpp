@@ -313,6 +313,43 @@ void Render::post() {
 }
 
 
+void Render::getCloud(const Input& in, std::vector<CloudPoint>& cloud) {
+  check();
+  double active_scale = in.in_scale;
+  active_scale /= 2;
+  int off = (mapping->map2.height()-mapping->light.height())/2;
+
+  if (mapping->map1.width()<mapping->light.width()) {
+    printf("Nothing\n");
+    return;
+  }
+
+  IMGFOR(mapping->light,x,y) {
+    const PixelBgra& lightPixel = mapping->light(x,y);
+    const PixelBgra& darkPixel = mapping->dark(x,y);
+    const PixelBgra& mapPixel = mapping->map1(x,y+off);
+    const PixelBgra& selPixel = mapping->map2(x,y+off);
+
+    int mod = mapPixel.b;
+    int ymod = mod/16;
+    int xmod = mod%16;
+    int act = mapPixel.a;
+    double x1 = mapPixel.r + 256*xmod - RR;
+    double y1 = mapPixel.g + 256*ymod - RR;
+    x1 *= in.xs;
+    y1 *= in.ys;
+    double xx =  in.xa*x1 + in.ya*y1;
+    double yy = -in.ya*x1 + in.xa*y1;
+    xx += RR + in.xo;
+    yy += RR + in.yo;
+    xx = in.in_x0 + active_scale*xx/RR;
+    yy = in.in_y0 + active_scale*yy/RR;
+    if (selPixel.r != 0 && act>25) {
+      cloud.push_back(CloudPoint(selPixel.r, xx, yy));
+    }
+  }
+}
+
 bool Render::auto_zoom(Input& in) {
   check();
   double active_scale = in.in_scale;

@@ -6,6 +6,20 @@
 #include "Input.h"
 #include "Inputs.h"
 
+#include <vector>
+
+class CloudPoint {
+public:
+  int layer;
+  float x, y;
+
+  CloudPoint(int layer, float x, float y) {
+    this->layer = layer;
+    this->x = x;
+    this->y = y;
+  }
+};
+
 class Render {
 private:
   const Mapping *mapping;
@@ -41,6 +55,8 @@ public:
   }
 
   void apply_scaled(const Inputs& ins, int w, int h);
+
+  void getCloud(const Input& in, std::vector<CloudPoint>& cloud);
 
   bool auto_zoom(Inputs& ins);
 

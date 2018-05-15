@@ -38,6 +38,8 @@ public:
 
   bool auto_zoom();
 
+  void scan(int frame);
+
   Render *get_render(int index = 0);
 
   void remove_render(int index);

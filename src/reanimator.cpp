@@ -84,6 +84,14 @@ int main(int argc, char *argv[]) {
     renders.auto_zoom();
   }
 
+  if (options.check("scan")) {
+    int frame = -1;
+    if (options.check("start")) {
+      frame = options.check("start",Value(0)).asInt();
+    }
+    renders.scan(frame);
+  }
+
   if (options.check("save")) {
     for (int i=first; i<=last; i++) {
       Render *r = renders.get_render(i);

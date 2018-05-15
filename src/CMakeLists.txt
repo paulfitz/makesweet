@@ -2,7 +2,7 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
-option(USE_OPENCV "Implement options that rely on OpenCV" TRUE)
+option(USE_OPENCV "Implement options that rely on OpenCV" FALSE)
 
 ADD_LIBRARY(msmap msmap.h msmap.c)
 ADD_LIBRARY(filer Filer.cpp Filer.h)

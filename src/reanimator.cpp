@@ -13,6 +13,7 @@
 #include "Render.h"
 #include "Renders.h"
 #include "GifAnim.h"
+#include "VidAnim.h"
 #include "Dbg.h"
 
 using namespace std;
@@ -113,6 +114,16 @@ int main(int argc, char *argv[]) {
     }
     anim.apply();
     anim.save(options.find("gif").asString().c_str());
+  }
+
+  if (options.check("vid")) {
+    VidAnim anim;
+    anim.attach_renders(&renders);
+    anim.set_timing(repo.get_period(),repo.get_hold());
+    if (options.check("start")) {
+      anim.set_first_frame(options.check("start",Value(0)).asInt());
+    }
+    anim.apply(options.find("vid").asString().c_str());
   }
 
   if (options.check("files")) {

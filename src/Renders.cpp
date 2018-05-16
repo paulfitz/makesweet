@@ -77,7 +77,7 @@ Obs tweakOne(const yarp::sig::ImageOf<yarp::sig::PixelBgra>& img,
   cv::Point2f pto, ptd;
   IMGFOR(img, x, y) {
     // speed up a bit - for precision remove this line
-    if (x % 4 != 0 || x % 4 != 0) continue;
+    // if (x % 4 != 0 || x % 4 != 0) continue;
 
     if (is_active(img(x, y))) {
       int edge=0, vertex=0;
@@ -163,6 +163,7 @@ Tweak tweak(const yarp::sig::ImageOf<yarp::sig::PixelBgra>& img,
       hi = curr;
     }
   }
+  good_scale *= 0.97;
   printf("Good scale: %g\n", good_scale);
   Tweak t;
   t.scale = good_scale;

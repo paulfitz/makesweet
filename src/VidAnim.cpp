@@ -8,7 +8,7 @@
 using namespace yarp::sig;
 using namespace yarp::os;
 
-#include <opencv2/opencv.hpp>
+#include <opencv2/highgui/highgui.hpp>
  
 using namespace std;
 using namespace cv;
@@ -48,6 +48,7 @@ void VidAnim::apply(const char *fname) {
   VideoWriter video(fname, CV_FOURCC('M','P','4','V'), rate, Size(r->get().width(),
                                                                   r->get().height()));
   Mat m;
+  ImageOf<PixelBgr> v1;
   while (true) {
     int i = (base + ((first_frame >= 0) ? first_frame : 0)) % frames;
     if (curr >= target) {
@@ -58,7 +59,6 @@ void VidAnim::apply(const char *fname) {
       }
       target = curr + step;
       Render *r = renders->get_render(i);
-      ImageOf<PixelBgr> v1;
       v1.copy(r->get());
       m = cvarrToMat(static_cast<const IplImage*>(v1.getIplImage()));
       base++;

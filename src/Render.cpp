@@ -345,7 +345,13 @@ void Render::getCloud(const Input& in, std::vector<CloudPoint>& cloud) {
     xx = in.in_x0 + active_scale*xx/RR;
     yy = in.in_y0 + active_scale*yy/RR;
     if (selPixel.r != 0 && act>25) {
-      cloud.push_back(CloudPoint(selPixel.r, xx, yy));
+      int del = 5;
+      if ((fabs(lightPixel.r - darkPixel.r) > del ||
+           fabs(lightPixel.g - darkPixel.g) > del ||
+           fabs(lightPixel.b - darkPixel.b) > del) &&
+          darkPixel.a>100 && lightPixel.a>100) {
+        cloud.push_back(CloudPoint(selPixel.r, xx, yy));
+      }
     }
   }
 }

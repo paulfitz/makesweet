@@ -69,6 +69,7 @@ bool is_active(const yarp::sig::PixelBgra& pix) {
 #ifdef MAKESWEET_USE_OPENCV
 Obs tweakOne(const yarp::sig::ImageOf<yarp::sig::PixelBgra>& img,
              float x0, float y0, float x1, float y1, float dx, float dy,
+             float xt, float yt, float ix, float iy,
              cv::Subdiv2D subdiv, float scale, float sx, float sy) {
   int w = img.width();
   int h = img.height();
@@ -81,8 +82,10 @@ Obs tweakOne(const yarp::sig::ImageOf<yarp::sig::PixelBgra>& img,
 
     if (is_active(img(x, y))) {
       int edge=0, vertex=0;
-      float xx = dx + sx + (((x - w/2)*scale) + w/2);
-      float yy = dy + sy + (((y - h/2)*scale) + h/2);
+      float xx = dx + (x - ix) * scale + xt;
+      float yy = dy + (y - iy) * scale + yt;
+      // float xx = dx + sx + (((x - w/2)*scale) + w/2);
+      // float yy = dy + sy + (((y - h/2)*scale) + h/2);
       bool dud = false;
       if (xx < x0 || xx > x1|| yy < y0 || yy > y1) {
         dud = true;
@@ -97,6 +100,13 @@ Obs tweakOne(const yarp::sig::ImageOf<yarp::sig::PixelBgra>& img,
           if (ptd.x < x0 || ptd.x > x1 || pto.x < x0 || pto.x > x1 ||
               ptd.y < y0 || ptd.y > y1 || pto.y < y0 || pto.y > y1) {
             dud = true;
+            break;
+          }
+          int del = 100;
+          if ((ptd.x - pto.x) * (ptd.x - pto.x) + 
+              (ptd.y - pto.y) * (ptd.y - pto.y) > del*del) {
+            dud = true;
+            break;
           }
           edge = subdiv.getEdge(edge, cv::Subdiv2D::NEXT_AROUND_LEFT);
         }
@@ -116,10 +126,19 @@ Obs tweakOne(const yarp::sig::ImageOf<yarp::sig::PixelBgra>& img,
   return obs;
 }
 
+float eval(float q, float curr) {
+  return q * sqrt(curr) + ((q >= 0.9999) ? 1.0 : 0);
+}
+
+float remap(float scale, float v, float i, float delta, Input& in) {
+  scale = 1 / scale;
+  return i - (scale * v - in.in_scale/2 * (scale - 1) - scale * delta) - delta;
+}
+
 Tweak tweak(const yarp::sig::ImageOf<yarp::sig::PixelBgra>& img,
             float x0, float y0, float x1, float y1, float dx, float dy,
             float tx, float ty,
-            cv::Subdiv2D subdiv) {
+            cv::Subdiv2D subdiv, Input& in) {
   bool first = true;
   float ix0 = 0, iy0 = 0, ix1 = 0, iy1 = 0;
   int actives = 0;
@@ -142,33 +161,65 @@ Tweak tweak(const yarp::sig::ImageOf<yarp::sig::PixelBgra>& img,
     printf("Skipping opaque image\n");
     return Tweak();
   }
-  float ix = (ix0 + ix1) / 2;
-  float iy = (iy0 + iy1) / 2;
-  float scale = 0.1;
+  float ix = (ix0 + ix1) / 2.0;
+  float iy = (iy0 + iy1) / 2.0;
+  float scale = 0.01;
   float q = 1.0;
   float good_scale = scale;
-  float sx = - (ix - (tx - dx));
-  float sy = - (iy - (ty - dy));
-  sx = 0; // constrain x offset, not interesting at this point
-  float lo = 0.1, hi = 3.0;
+  float dim = img.width();
+  if (img.height() > dim) { dim = img.height(); }
+  float xt = (tx - dx);
+  float yt = (ty - dy);
+  float blo = 0.1, bhi = 6.0;
+  float lo = blo, hi = bhi;
+  bool have_full = false;
+  float decent_scale = 1;
+  float decent_scale_value = -1;
   while (fabs(lo-hi) > 0.01) {
     float curr = (lo+hi)/2;
-    Obs obs = tweakOne(img, x0, y0, x1, y1, dx, dy, subdiv, curr, sx, sy);
-    printf("in/out %d %d q %g scale %g\n", obs.nin, obs.nout, obs.q, curr);
+    Obs obs = tweakOne(img, x0, y0, x1, y1, dx, dy,
+                       xt, yt, ix, iy,
+                       subdiv, curr);
     q = obs.q;
+    float v = eval(q, curr);
+    printf("in/out %d %d q %g scale %g - val %g\n", obs.nin, obs.nout, obs.q, curr, v);
+    if (v > decent_scale_value) {
+      decent_scale = curr;
+      decent_scale_value = v;
+    }
     if (q > 0.9999) {
+      have_full = true;
       if (curr > good_scale) good_scale = curr;
       lo = curr;
     } else {
       hi = curr;
     }
   }
+  if (true) {
+    int steps = 20;
+    for (int i=1; i<=steps; i++) {
+      float curr = blo + (bhi - blo) * (float(i) / steps);
+      Obs obs = tweakOne(img, x0, y0, x1, y1, dx, dy,
+                         xt, yt, ix, iy,
+                         subdiv, curr);
+      q = obs.q;
+      float v = eval(q, curr);
+      printf("in/out %d %d q %g scale %g - val %g\n", obs.nin, obs.nout, obs.q, curr, v);
+      if (v > decent_scale_value) {
+        decent_scale = curr;
+        decent_scale_value = v;
+      }
+    }
+    good_scale = decent_scale;
+  }
+  printf("Best scale: %g\n", good_scale);
   good_scale *= 0.97;
-  printf("Good scale: %g\n", good_scale);
   Tweak t;
   t.scale = good_scale;
-  t.x += sx;
-  t.y += sy;
+  t.x = remap(good_scale, xt, ix, in.in_x0, in);
+  t.y = remap(good_scale, yt, iy, in.in_y0, in);
+  printf("  t.scale: %g\n", t.scale);
+  printf("  t.x t.y: %g %g\n", t.x, t.y);
   return t;
 }
 
@@ -236,12 +287,11 @@ void Renders::scan(int frame) {
     }
 
     const yarp::sig::ImageOf<yarp::sig::PixelBgra>& img = in.get();
-    Tweak t = tweak(img, x0, y0, x1, y1, dx, dy, tx, ty, subdiv);
+    Tweak t = tweak(img, x0, y0, x1, y1, dx, dy, tx, ty, subdiv, in);
     printf("adjusting scale by factor: %g\n", t.scale);
     in.xs /= t.scale;
     in.ys /= t.scale;
-    in.in_x0 -= t.x;
-    in.in_y0 -= t.y;
+    in.in_y0 += t.y;
   }
 }
 

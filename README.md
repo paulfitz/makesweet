@@ -5,13 +5,13 @@ Input
 
 ![frog](https://user-images.githubusercontent.com/118367/39386221-9780dec0-4a41-11e8-827d-ec30fea33269.jpg)
 
-Calculations
-------------
+Running makesweet
+-----------------
 
 ```
-docker run -v $PWD:/share paulfitz/makesweet /reanimator \
+docker run -v $PWD:/share paulfitz/makesweet \
   --zip templates/billboard-cityscape.zip \
-  --in templates/frog.jpg \
+  --in images/frog.jpg \
   --gif animation.gif
 ```
 

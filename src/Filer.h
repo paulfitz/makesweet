@@ -17,6 +17,8 @@ public:
      if (src_zip) unload_zip();
    }
 
+   void *getZip() { return src_zip; }
+
    bool load_zip(const char *fname);
    bool unload_zip();
 

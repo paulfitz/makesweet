@@ -16,12 +16,14 @@ void Repository::load_part(const char *postfix, int idx) {
   string neutral = base + "TransparentData";
   string map1 = base + "MapData";
   string map2 = base + "SelData";
+  string samples = base + "Samples";
   if (postfix[0]!='\0') {
     dark += postfix;
     light += postfix;
     neutral += postfix;
     map1 += postfix;
     map2 += postfix;
+    samples += postfix;
   }
 
   if (mappings.find(idx)==mappings.end()) {
@@ -40,12 +42,14 @@ void Repository::load_part(const char *postfix, int idx) {
   }
   
   bool have_neutral = inventory.check(neutral.c_str());
+  bool have_samples = inventory.check(samples.c_str());
 
   ConstString light_name = inventory.find(light.c_str()).asString();
   ConstString dark_name = inventory.find(dark.c_str()).asString();
   ConstString neutral_name = inventory.find(neutral.c_str()).asString();
   ConstString map1_name = inventory.find(map1.c_str()).asString();
   ConstString map2_name = inventory.find(map2.c_str()).asString();
+  ConstString samples_name = inventory.find(samples.c_str()).asString();
 
   dbg_printf("Loading light %s\n", light_name.c_str());
   if (!filer.load(light_name.c_str(),s.light)) exit(1);
@@ -53,9 +57,11 @@ void Repository::load_part(const char *postfix, int idx) {
   dbg_printf("Loading dark\n");
   if (!filer.load(dark_name.c_str(),s.dark)) exit(1);
   s.dark_name = dark_name;
-  dbg_printf("Loading map1\n");
-  if (!filer.load(map1_name.c_str(),s.map1)) exit(1);
-  s.map1_name = map1_name;
+  if (!have_samples) {
+    dbg_printf("Loading map1\n");
+    if (!filer.load(map1_name.c_str(),s.map1)) exit(1);
+    s.map1_name = map1_name;
+  }
   dbg_printf("Loading map2\n");
   if (!filer.load(map2_name.c_str(),s.map2)) exit(1);
   s.map2_name = map2_name;
@@ -66,6 +72,12 @@ void Repository::load_part(const char *postfix, int idx) {
   } else {
     s.neutral = s.light;
     s.neutral_name = light_name;
+  }
+  if (have_samples) {
+    dbg_printf("Loading samples\n");
+    s.load_samples(samples_name.c_str(), filer);
+  } else {
+    s.load_samples(NULL, filer);
   }
 
   s.scale = 1;

@@ -1,6 +1,7 @@
-*~
-build
-stash
-old
-templates
-Dockerfile
+*
+!src/*.cpp
+!src/*.h
+!src/*.c
+!src/*.proto
+!src/CMakeLists.txt
+!CMakeLists.txt

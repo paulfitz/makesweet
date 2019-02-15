@@ -25,12 +25,14 @@ private:
   const Mapping *mapping;
   yarp::sig::ImageOf<yarp::sig::PixelBgra> out;
   yarp::sig::ImageOf<yarp::sig::PixelBgra> out_scaled;
+  std::string quality;
 
   // active variables
 
 public:
-  Render() {
+  Render(const std::string& nquality = "none") {
     mapping = 0 /*NULL*/;
+    quality = nquality;
   }
 
   void check();
@@ -49,6 +51,8 @@ public:
   void add_simple(const Input& in);
 
   void add(const Input& in);
+
+  void add_sampled(const Input& in);
 
   void apply(const Inputs& ins) {
     apply_scaled(ins,-1,-1);

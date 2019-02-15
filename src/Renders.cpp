@@ -25,7 +25,7 @@ Render *Renders::get_render(int index) {
   check();
   map<int,Render>::iterator it = renders.find(index);
   if (it == renders.end()) {
-    Render& render = renders[index] = Render();
+    Render& render = renders[index] = Render(quality);
     render.attach_mapping(repo->get_mapping(index));
     render.apply_scaled(*inputs,w,h);
     int rct = (int)renders.size();
@@ -41,6 +41,7 @@ void Renders::remove_render(int index) {
   if (it!=renders.end()) {
     renders.erase(it);
   }
+  repo->remove_mapping(index);
 }
 
 class Obs {
@@ -70,7 +71,7 @@ bool is_active(const yarp::sig::PixelBgra& pix) {
 Obs tweakOne(const yarp::sig::ImageOf<yarp::sig::PixelBgra>& img,
              float x0, float y0, float x1, float y1, float dx, float dy,
              float xt, float yt, float ix, float iy,
-             cv::Subdiv2D subdiv, float scale, float sx, float sy) {
+             cv::Subdiv2D subdiv, float scale) {
   int w = img.width();
   int h = img.height();
   Obs obs;
@@ -230,7 +231,7 @@ void Renders::scan(int frame) {
   int ins = inputs->get().size();
   for (int k=0; k<ins; k++) {
     printf("Scan input %d frame %d\n", k, frame);
-    Render render;
+    Render render(quality);
     render.attach_mapping(repo->get_mapping(frame));
     std::vector<CloudPoint> pts;
     Input& in = inputs->get_mod()[k];
@@ -303,7 +304,7 @@ void Renders::scan(int frame) {
 
 bool Renders::auto_zoom() {
   check();
-  Render render;
+  Render render(quality);
   render.attach_mapping(repo->get_mapping(0));
   return render.auto_zoom(*inputs);
 }

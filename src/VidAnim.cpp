@@ -60,6 +60,7 @@ void VidAnim::apply(const char *fname) {
       target = curr + step;
       Render *r = renders->get_render(i);
       v1.copy(r->get());
+      renders->remove_render(i);
       m = cvarrToMat(static_cast<const IplImage*>(v1.getIplImage()));
       base++;
     }

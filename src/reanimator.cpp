@@ -68,7 +68,7 @@ int main(int argc, char *argv[]) {
     layer++;
   }
 
-  Renders renders;
+  Renders renders("sampled");
   renders.attach_repository(&repo);
   renders.attach_inputs(&ins);
   if (options.check("w")&&options.check("h")) {

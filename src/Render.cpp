@@ -33,6 +33,105 @@ void Render::check() {
   }
 }
 
+void Render::add_sampled(const Input& in) {
+  check();
+  double active_scale = in.in_scale;
+  active_scale /= 2; //mapping->scale;
+  int off = (mapping->map2.height()-mapping->light.height())/2;
+
+  if (mapping->map2.width()<mapping->light.width()) {
+    return;
+  }
+
+  Summary empty;
+  IMGFOR(out,x,y) {
+    PixelBgra& pix = out(x,y);
+    const PixelBgra& lightPixel = mapping->light(x,y);
+    const PixelBgra& darkPixel = mapping->dark(x,y);
+    const PixelBgra& selPixel = mapping->map2(x,y+off);
+    auto it = mapping->sum.summaries.find(mapping->sum.offset(x, mapping->light.height() - 1 - y));
+    const Summary& summary = (it != mapping->sum.summaries.end()) ? it->second : empty;
+
+    PixelBgra result, m;
+    bool d = (selPixel.r==in.layer);
+    if (d) {
+      m.a = 255;
+      m.r = 255;
+      m.g = 0;
+      m.b = 0;
+      float ct = 0;
+      double aa = 0, rr = 0, gg = 0, bb = 0;
+      for (auto &sample: summary.samples) {
+        // printf(">>> %g %g\n", sample.fx, sample.fy);
+        if (sample.fx < 0 || sample.fx > 1 || sample.fy < 0 || sample.fy > 1) {
+          continue;
+        }
+
+        int x = (int)(sample.fx*4096+4096+0.5);
+        int y = (int)(sample.fy*4096+4096+0.5);
+        if (x>4095) x -= 4096;
+        if (y>4095) y -= 4096;
+        if (x>4095) x = 4095;
+        if (y>4095) y = 4095;
+        if (x<0) x = 0;
+        if (y<0) y = 0;
+        y = 4095-y;
+
+        double x1 = x - RR;
+        double y1 = y - RR;
+        x1 *= in.xs;
+        y1 *= in.ys;
+        double xx =  in.xa*x1 + in.ya*y1;
+        double yy = -in.ya*x1 + in.xa*y1;
+        xx += RR + in.xo;
+        yy += RR + in.yo;
+        xx = in.in_x0 + active_scale*xx/RR;
+        yy = in.in_y0 + active_scale*yy/RR;
+
+        const PixelBgra& m2 = in.get().safePixel((int)xx,(int)yy); 
+        m.r = m2.r;
+        m.g = m2.g;
+        m.b = m2.b;
+
+        float f = sample.factor;
+        aa += m2.a * f;
+        rr += m2.a * m2.r * f;
+        gg += m2.a * m2.g * f;
+        bb += m2.a * m2.b * f;
+        ct += f;
+      }
+      if (aa < 0.001) aa = 0.001;
+      if (ct < 0.001) ct = 0.001;
+      rr /= aa;
+      gg /= aa;
+      bb /= aa;
+      aa /= ct;
+      m.r = int(rr);
+      m.g = int(gg);
+      m.b = int(bb);
+      m.a = int(aa);
+
+      result.r = darkPixel.r + ((lightPixel.r-darkPixel.r)*m.r)/255;
+      result.g = darkPixel.g + ((lightPixel.g-darkPixel.g)*m.g)/255;
+      result.b = darkPixel.b + ((lightPixel.b-darkPixel.b)*m.b)/255;
+      result.a = m.a;
+      if (darkPixel.a<result.a) {
+	result.a = darkPixel.a;
+      }
+      if (result.a>0) {
+	PixelBgra& outPixel = out.pixel(x,y);
+	if (result.a>250) {
+	  outPixel = result;
+	} else {
+	  outPixel.r += ((result.r-outPixel.r)*result.a)/255;
+	  outPixel.g += ((result.g-outPixel.g)*result.a)/255;
+	  outPixel.b += ((result.b-outPixel.b)*result.a)/255;
+	}
+      }
+    }
+  }
+}
+
 void Render::add(const Input& in) {
   check();
   double active_scale = in.in_scale;
@@ -419,7 +518,11 @@ void Render::apply_scaled(const Inputs& ins, int w, int h) {
   const std::vector<Input>& data = ins.get();
   for (std::vector<Input>::const_iterator it = data.begin();
        it != data.end(); it++) {
-    add(*it);
+    if (mapping->have_sum) {
+      add_sampled(*it);
+    } else {
+      add(*it);
+    }
   }
   post();
   if (w>0&&h>0 && (w!=out.width()||h!=out.height())) {

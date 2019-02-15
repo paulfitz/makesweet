@@ -12,13 +12,15 @@ private:
   std::map<int,Render> renders;
   int w, h;
   int peak_cache_count;
+  std::string quality;
 
 public:
-  Renders() {
+  Renders(const std::string& nquality) {
     inputs = 0 /*NULL*/;
     repo = 0 /*NULL*/;
     w = h = -1;
     peak_cache_count = 0;
+    quality = nquality;
   }
 
   void check();

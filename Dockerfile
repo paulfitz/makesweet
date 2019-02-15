@@ -1,5 +1,7 @@
 FROM ubuntu:18.04
 
+# this is a very chubby docker image, it could be stripped down a lot.
+
 RUN \
   apt-get update; \
   apt-get install -y build-essential
@@ -19,14 +21,22 @@ RUN \
   cmake -DSKIP_ACE=TRUE ../yarp-*; \
   make 
 
+RUN \
+  apt-get update; \
+  apt-get install -y protobuf-compiler libprotobuf-dev
+
+RUN \
+  apt-get update; \
+  apt-get install -y libopencv-videoio-dev
+
 COPY . /makesweet/
 
 RUN \
   cd /makesweet; \
   mkdir build; \
   cd build; \
-  cmake -DYARP_DIR=/tmp/yarp ..; \
-  make
+  cmake -DUSE_OPENCV=ON -DUSE_DETAIL=ON -DYARP_DIR=/tmp/yarp ..; \
+  make VERBOSE=1
 
 RUN \
   echo "#!/bin/bash" > /reanimator; \

@@ -1,0 +1,24 @@
+syntax = "proto2";
+
+package makesweet;
+
+message Sample {
+  required int32 fx = 1;
+  required int32 fy = 2;
+  required int32 factor = 3;
+}
+
+message Summary {
+  required int32 x = 1;
+  required int32 y = 2;
+  repeated Sample samples = 3;
+}
+
+message Frame {
+  repeated Summary summaries = 1;
+  required float min_fx = 2;
+  required float max_fx = 3;
+  required float min_fy = 4;
+  required float max_fy = 5;
+  required int32 fscale = 6;
+}

@@ -249,17 +249,29 @@ void Render::add(const Input& in) {
     Pixer m3b = sampleLinear(in.get(),xx+(xxa-xxb)/2.0,yy+(yya-yyb)/2.0);
     Pixer m4b = sampleLinear(in.get(),xx-(xxa+xxb)/2.0,yy-(yya+yyb)/2.0);
     Pixer m5b = sampleLinear(in.get(),xx-(xxa-xxb)/2.0,yy-(yya-yyb)/2.0);
-    
+
+    mo.preblend();
+    m2.preblend();
+    m3.preblend();
+    m4.preblend();
+    m5.preblend();
+    m2b.preblend();
+    m3b.preblend();
+    m4b.preblend();
+    m5b.preblend();
+    double sc = (mo.a*4.0 + (m2.a+m3.a+m4.a+m5.a)*2.0 + (m2b.a+m3b.a+m4b.a+m5b.a))/16.0;
     mo = (mo*4.0 + (m2+m3+m4+m5)*2.0 + (m2b+m3b+m4b+m5b))/16.0;
+    if (sc > 0.0001) {
+      mo.postblend(sc);
+    } else {
+      mo.r = mo.g = mo.b = mo.a = 0.0;
+    }
+ 
     m.r = mo.r;
     m.g = mo.g;
     m.b = mo.b;
     m.a = mo.a;
-    //} else {
-    //m = in.get().safePixel((int)xx,(int)yy);
-    //}
 
-    //const PixelBgra& m = in.get().safePixel((int)xx,(int)yy);
     PixelBgra result;
     if (d && act>25) {
       result.r = darkPixel.r + ((lightPixel.r-darkPixel.r)*m.r)/255;

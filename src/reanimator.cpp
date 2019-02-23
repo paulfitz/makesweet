@@ -16,6 +16,10 @@
 #include "VidAnim.h"
 #include "Dbg.h"
 
+#include <json/json.h>
+#include <fstream>
+#include <iostream>
+
 using namespace std;
 using namespace yarp::os;
 using namespace yarp::sig;
@@ -33,9 +37,10 @@ int main(int argc, char *argv[]) {
 
   Repository repo;
 
-  if (!options.check("zip")) {
+  if (!options.check("zip") && !options.check("json")) {
     fprintf(stderr, "reanimator --zip foo.zip --in layer1.png layer2.png\n");
     fprintf(stderr, "reanimator --zip foo.zip --in layer1.png layer2.png +layer2_more.png\n");
+    fprintf(stderr, "reanimator --json setup.json\n");
     fprintf(stderr, "reanimator ... --w 200 --h 150\n");
     fprintf(stderr, "reanimator ... --first 2\n");
     fprintf(stderr, "reanimator ... --last 4\n");
@@ -50,9 +55,35 @@ int main(int argc, char *argv[]) {
     exit(1);
   }
   
-  repo.load(options.find("zip").asString().c_str());
-
   Inputs ins;
+
+  if (options.check("json")) {
+    std::ifstream file(options.find("json").asString().c_str());
+    Json::Value root;
+    file >> root;
+    std::cout << root;
+    Json::Value inputs = root["inputs"];
+    for (int i=0; i<inputs.size(); i++) {
+      std::cout << i << std::endl;
+      Json::Value input = inputs[i];
+      std::string filename = input["filename"].asString();
+      std::cout << filename << std::endl;
+      Input& in = ins.add();
+      in.load(filename.c_str());
+      in.layer = input["layer"].asInt();
+      in.xs = input["xs"].asDouble();
+      in.ys = input["ys"].asDouble();
+      in.xo = input["xo"].asDouble();
+      in.yo = input["yo"].asDouble();
+      in.in_scale = input["in_scale"].asInt();
+      in.in_x0 = input["in_x0"].asDouble();
+      in.in_y0 = input["in_y0"].asDouble();
+      in.xa = input["in_xa"].asDouble();
+      in.ya = input["in_ya"].asDouble();
+    }
+  }
+  
+  repo.load(options.find("zip").asString().c_str());
 
   Bottle& lst = options.findGroup("in");
   int layer = 1;

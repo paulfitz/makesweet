@@ -29,6 +29,10 @@ RUN \
   apt-get update; \
   apt-get install -y libopencv-videoio-dev
 
+RUN \
+  apt-get update; \
+  apt-get install -y libjsoncpp-dev
+
 COPY . /makesweet/
 
 RUN \

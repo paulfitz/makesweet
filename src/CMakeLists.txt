@@ -18,7 +18,8 @@ ELSE()
   SET(PROTO_HDRS)
 ENDIF()
 
-ADD_LIBRARY(msmap msmap.h msmap.c)
+ADD_LIBRARY(msmap STATIC msmap.h msmap.c)
+include_directories(${JSONCPP_INCLUDE_DIRS})
 
 ADD_EXECUTABLE(reanimator reanimator.cpp Prop.h Prop.cpp Pixer.h
   Mapping.h Mapping.cpp Repository.h Repository.cpp Render.h Render.cpp
@@ -42,3 +43,5 @@ endif()
 if (USE_DETAIL)
   TARGET_LINK_LIBRARIES(reanimator ${PROTOBUF_LIBRARIES})
 endif()
+
+target_link_libraries(reanimator ${JSONCPP_LIBRARIES})

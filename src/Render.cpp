@@ -43,6 +43,9 @@ void Render::add_sampled(const Input& in) {
     return;
   }
 
+  int w = in.get().width();
+  int h = in.get().height();
+
   Summary empty;
   IMGFOR(out,x,y) {
     PixelBgra& pix = out(x,y);
@@ -52,21 +55,11 @@ void Render::add_sampled(const Input& in) {
     auto it = mapping->sum.summaries.find(mapping->sum.offset(x, mapping->light.height() - 1 - y));
     const Summary& summary = (it != mapping->sum.summaries.end()) ? it->second : empty;
 
-    PixelBgra result, m;
     bool d = (selPixel.r==in.layer);
     if (d) {
-      m.a = 255;
-      m.r = 255;
-      m.g = 0;
-      m.b = 0;
       float ct = 0;
       double aa = 0, rr = 0, gg = 0, bb = 0;
       for (auto &sample: summary.samples) {
-        // printf(">>> %g %g\n", sample.fx, sample.fy);
-        if (sample.fx < 0 || sample.fx > 1 || sample.fy < 0 || sample.fy > 1) {
-          continue;
-        }
-
         int x = (int)(sample.fx*4096+4096+0.5);
         int y = (int)(sample.fy*4096+4096+0.5);
         if (x>4095) x -= 4096;
@@ -88,10 +81,12 @@ void Render::add_sampled(const Input& in) {
         xx = in.in_x0 + active_scale*xx/RR;
         yy = in.in_y0 + active_scale*yy/RR;
 
+        if (xx < 0) xx = 0;
+        if (yy < 0) yy = 0;
+        if (xx >= w) xx = w - 1;
+        if (yy >= h) yy = h - 1;
+
         const PixelBgra& m2 = in.get().safePixel((int)xx,(int)yy); 
-        m.r = m2.r;
-        m.g = m2.g;
-        m.b = m2.b;
 
         float f = sample.factor;
         aa += m2.a * f;
@@ -106,6 +101,7 @@ void Render::add_sampled(const Input& in) {
       gg /= aa;
       bb /= aa;
       aa /= ct;
+      PixelBgra result, m;
       m.r = int(rr);
       m.g = int(gg);
       m.b = int(bb);
@@ -116,7 +112,7 @@ void Render::add_sampled(const Input& in) {
       result.b = darkPixel.b + ((lightPixel.b-darkPixel.b)*m.b)/255;
       result.a = m.a;
       if (darkPixel.a<result.a) {
-	result.a = darkPixel.a;
+        result.a = darkPixel.a;
       }
       if (result.a>0) {
 	PixelBgra& outPixel = out.pixel(x,y);

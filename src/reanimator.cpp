@@ -61,13 +61,10 @@ int main(int argc, char *argv[]) {
     std::ifstream file(options.find("json").asString().c_str());
     Json::Value root;
     file >> root;
-    std::cout << root;
     Json::Value inputs = root["inputs"];
     for (int i=0; i<inputs.size(); i++) {
-      std::cout << i << std::endl;
       Json::Value input = inputs[i];
       std::string filename = input["filename"].asString();
-      std::cout << filename << std::endl;
       Input& in = ins.add();
       in.load(filename.c_str());
       in.layer = input["layer"].asInt();

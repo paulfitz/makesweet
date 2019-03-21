@@ -66,6 +66,7 @@ void VidAnim::apply(const char *fname) {
     }
     video.write(m);
     printf("Rendered: %d of %d frames\n", base, frames);
+    fflush(stdout);
     curr += frame_rate;
   }
   video.release();

@@ -41,7 +41,7 @@ void Mapping::load_samples(const char *name, Filer& filer) {
   }
   zzip_file_close(fp);
 
-  printf("Loading samples %s starting\n", name);
+  // printf("Loading samples %s starting\n", name);
   google::protobuf::io::ArrayInputStream input_stream(data.data(), (int)data.size());
   google::protobuf::io::CodedInputStream coded_stream(&input_stream);
   coded_stream.SetTotalBytesLimit(2147483647, -1);
@@ -56,7 +56,7 @@ void Mapping::load_samples(const char *name, Filer& filer) {
   float min_fy = frame.min_fy();
   float max_fy = frame.max_fy();
   float fscale = frame.fscale();
-  printf("Loading samples %s summarizing\n", name);
+  // printf("Loading samples %s summarizing\n", name);
   for (auto &summary: frame.summaries()) {
     int x = summary.x();
     int y = summary.y();
@@ -78,6 +78,6 @@ void Mapping::load_samples(const char *name, Filer& filer) {
       lsummary.samples.push_back(Sample({fx, fy, factor}));
     }
   }
-  printf("Loading samples %s done\n", name);
+  // printf("Loading samples %s done\n", name);
 #endif
 }

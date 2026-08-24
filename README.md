@@ -45,8 +45,12 @@ with:
 
 See `docker run paulfitz/makesweet -h` for more options.
 
-Source
-------
+Source and license
+------------------
 
 The designs come from https://makesweet.com
+
+This repository (code and templates) is licensed for noncommercial
+use under the PolyForm Noncommercial License 1.0.0; see LICENSE.md.
+For commercial licensing, get in touch.
 

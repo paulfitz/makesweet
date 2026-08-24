@@ -1,3 +1,8 @@
+Scope: this MIT license covers the software in this repository
+(source code, build files, and documentation). The animation
+templates under templates/ are artwork licensed separately; see
+templates/LICENSE.md.
+
 Copyright (c) 2021 Paul Fitzpatrick &lt;paulfitz@alum.mit.edu&gt;
 
 Permission is hereby granted, free of charge, to any person obtaining

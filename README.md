@@ -45,8 +45,14 @@ with:
 
 See `docker run paulfitz/makesweet -h` for more options.
 
-Source
-------
+Source and license
+------------------
 
 The designs come from https://makesweet.com
+
+The code in this repository is MIT licensed (see LICENSE.md). The
+animation templates in `templates/` are artwork licensed for
+noncommercial use with attribution (CC BY-NC 4.0); see
+templates/LICENSE.md. For commercial licensing of the designs, get
+in touch.
 

@@ -50,9 +50,7 @@ Source and license
 
 The designs come from https://makesweet.com
 
-The code in this repository is MIT licensed (see LICENSE.md). The
-animation templates in `templates/` are artwork licensed for
-noncommercial use with attribution (CC BY-NC 4.0); see
-templates/LICENSE.md. For commercial licensing of the designs, get
-in touch.
+This repository (code and templates) is licensed for noncommercial
+use under the PolyForm Noncommercial License 1.0.0; see LICENSE.md.
+For commercial licensing, get in touch.
 
